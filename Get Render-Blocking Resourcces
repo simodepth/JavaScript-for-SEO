@@ -1,0 +1,7 @@
+// get all resources
+window.performance.getEntriesByType('resource')
+    //filter out the blocking ones
+    .filter(({renderBlockingStatus}) =>
+        renderBlockingStatus === 'blocking')
+    // log their names
+    .forEach(({name}) => console.log(name))

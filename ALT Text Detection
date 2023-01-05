@@ -1,14 +1,31 @@
 const images = document.querySelectorAll('img');
 
+const data = [];
+
 images.forEach(image => {
-  // get the alt text
+  // get the alt text and the URL of the page
   const altText = image.alt;
+  const url = window.location.href;
 
-  // create a span element to hold the alt text
-  const altTextSpan = document.createElement('span');
-  altTextSpan.textContent = `[ALT text]: ${altText}`;
-  altTextSpan.style.backgroundColor = 'yellow';
-
-  // insert the alt text span after the image
-  image.parentNode.insertBefore(altTextSpan, image.nextSibling);
+  // add the data to the array
+  data.push({
+    URL: url,
+    'ALT Text': altText
+  });
 });
+
+// convert the data array to CSV
+const csv = data.map(row => {
+  return Object.values(row).join(',');
+}).join('\n');
+
+// create a link element to download the CSV file
+const link = document.createElement('a');
+link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+link.download = 'alt_text_data.csv';
+
+// append the link to the DOM
+document.body.appendChild(link);
+
+// simulate a click on the link to start the download
+link.click();

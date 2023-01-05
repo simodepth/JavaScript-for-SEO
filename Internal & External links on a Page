@@ -1,0 +1,32 @@
+function highlightLinks() {
+  // get the origin of the current page
+  const origin = window.location.origin;
+
+  // find all the a elements on the page
+  const anchors = document.querySelectorAll('a');
+
+  // loop through the a elements
+  for (const anchor of anchors) {
+    // get the href attribute of the a element
+    const href = anchor.href;
+
+    // create a span element to hold the link type
+    const linkTypeSpan = document.createElement('span');
+
+    // check if the href starts with the origin
+    if (href.startsWith(origin)) {
+      // internal link
+      linkTypeSpan.textContent = '[Internal Link]';
+      linkTypeSpan.style.backgroundColor = 'yellow';
+    } else {
+      // external link
+      linkTypeSpan.textContent = '[External Link]';
+      linkTypeSpan.style.backgroundColor = 'red';
+    }
+
+    // insert the link type span before the a element
+    anchor.parentNode.insertBefore(linkTypeSpan, anchor);
+  }
+}
+
+highlightLinks();

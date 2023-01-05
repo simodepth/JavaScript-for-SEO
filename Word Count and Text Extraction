@@ -1,0 +1,99 @@
+let page_test_data = async()=>{
+
+    const readability = await import('https://cdn.skypack.dev/@mozilla/readability');
+    const textStatistics = await import('https://cdn.skypack.dev/text-statistics');
+
+    const allowedMetrics = ['fleschKincaidReadingEase', 'fleschKincaidGradeLevel', 'gunningFogScore', 'colemanLiauIndex', 'automatedReadabilityIndex', 'averageSyllablesPerWord', 'letterCount', 'sentenceCount', 'wordCount', 'averageWordsPerSentence', 'title', 'byline', 'dir', 'excerpt', 'sitename', 'textContent', 'title'];
+
+    let export_to_csv = (filename,rows)=>{
+
+        let process_row = (row)=>{
+            var finalVal = '';
+            for (var j = 0; j < row.length; j++) {
+                var innerValue = row[j] === null ? '' : row[j].toString();
+                if (row[j]instanceof Date) {
+                    innerValue = row[j].toLocaleString();
+                }
+                ;var result = innerValue.replace(/"/g, '""');
+                if (result.search(/("|,|\n)/g) >= 0)
+                    result = '"' + result + '"';
+                if (j > 0)
+                    finalVal += ',';
+                finalVal += result;
+            }
+            return finalVal + '\n';
+        }
+        ;
+
+        var csvFile = '';
+        for (var i = 0; i < rows.length; i++) {
+            csvFile += process_row(rows[i]);
+        }
+
+        var blob = new Blob([csvFile],{
+            type: 'text/csv;charset=utf-8;'
+        });
+        if (navigator.msSaveBlob) {
+            // IE 10+
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement("a");
+            if (link.download !== undefined) {
+                // feature detection
+                // Browsers that support HTML5 download attribute
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    }
+
+    let clean_text = (text)=>{
+        var tokens = text.toLowerCase().replace(/\s+/g, ' ').replace(/\’/g, '\'').match(/[a-z0-9\-\'\.\?\!\,\:\(\)\%]+/g);
+        if (Array.isArray(tokens)) {
+            return tokens.join(' ');
+        }
+        return text
+    }
+
+    let process_stats = (text)=>{
+        let csvData = {};
+        let testStats = textStatistics.default(text);
+        for (data in testStats)
+            allowedMetrics.indexOf(data) > -1 ? csvData[data] = testStats[data]() : null;
+        return csvData;
+    }
+
+    let process_doc = ()=>{
+        let csvData = {};
+        let documentClone = document.cloneNode(true);
+        let textData = new readability.Readability(documentClone).parse();
+        textData.textContent = clean_text(textData.textContent);
+        textData.excerpt = clean_text(textData.excerpt);
+
+        for (data in textData)
+            allowedMetrics.indexOf(data) > -1 ? csvData[data] = textData[data] : null;
+
+        let statsData = process_stats(textData.textContent);
+        csvData = {
+            ...csvData,
+            ...statsData
+        };
+
+        let urlName = window.location.href;
+        let urlFileName = urlName.replace(/[^\w]+/g, '_').trim() + '_text_data.csv';
+
+        export_to_csv(urlFileName, Object.entries(csvData));
+
+        console.log('Saved to:', urlFileName);
+    }
+
+    process_doc();
+
+}
+
+await page_test_data();

@@ -1,0 +1,14 @@
+const images = document.querySelectorAll('img');
+
+images.forEach(image => {
+  // get the alt text
+  const altText = image.alt;
+
+  // create a span element to hold the alt text
+  const altTextSpan = document.createElement('span');
+  altTextSpan.textContent = `[ALT text]: ${altText}`;
+  altTextSpan.style.backgroundColor = 'yellow';
+
+  // insert the alt text span after the image
+  image.parentNode.insertBefore(altTextSpan, image.nextSibling);
+});

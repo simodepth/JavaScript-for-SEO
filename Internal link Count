@@ -1,0 +1,22 @@
+let all_links = Array.from(document.querySelectorAll('a')).length
+let valid_links = Array.from(document.querySelectorAll('a')).map(e=>e.href).filter(e=>e.length);
+let cat_links = (url)=>{
+    return url.indexOf(new URL(window.location.href).origin) == 0 ? "Internal" : "External"
+}
+
+console.log("Current location:", window.location.href)
+console.log("All <a> links count:", all_links)
+console.log("All <a> with valid href links count:", valid_links.length)
+console.log("Unique <a> with valid href links count:", new Set(valid_links).size)
+
+console.log("All Internal Links count:", valid_links.filter((x)=>{
+    return cat_links(x) == 'Internal'
+}
+).length)
+console.log("All External Links count:", valid_links.filter((x)=>{
+    return cat_links(x) == 'External'
+}
+).length)
+
+console.log("Links with valid href:")
+console.log(links_with_href.join('\n'))

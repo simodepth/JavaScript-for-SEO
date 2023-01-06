@@ -1,0 +1,8 @@
+//Stop Colab from disconnecting when leaving the notebook idle
+
+function ClickConnect(){
+console.log("Clicked on connect button");
+document.querySelector("colab-connect-button").click()
+}
+setInterval(ClickConnect, 60000)
+ 

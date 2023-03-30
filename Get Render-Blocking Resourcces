@@ -1,11 +1,88 @@
-// get all resources
-window.performance.getEntriesByType('resource')
-    // filter out the blocking ones
-    .filter(({renderBlockingStatus}) =>
-        renderBlockingStatus === 'blocking')
-    // log their names, byte sizes in KiB, and potential savings in KiB
-    .forEach(({name, transferSize, duration}) => {
-        console.log(`Name: ${name}`);
-        console.log(`Byte size: ${(transferSize / 1024).toFixed(2)} KiB`);
-        console.log(`Potential savings: ${(duration / 1024).toFixed(2)} KiB`);
+let durations = performance.getEntriesByType('resource').map(entry=>{
+    return {
+        name: entry.name,
+        duration: parseFloat(entry.duration / 1000).toFixed(2),
+        type: entry.initiatorType,
+        blocking: entry.renderBlockingStatus
+    }
+}
+);
+
+let format_for_csv = (data)=>{
+    let result = [];
+    let colnames = Object.keys(data[0]);
+
+    result.push(colnames);
+    data = data.map(e=>colnames.map(c=>e[c]));
+    result.push(...data);
+    return result;
+}
+
+let export_to_csv = (filename,rows)=>{
+
+    let process_row = (row)=>{
+        var finalVal = '';
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString();
+            if (row[j]instanceof Date) {
+                innerValue = row[j].toLocaleString();
+            }
+            ;var result = innerValue.replace(/"/g, '""');
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"';
+            if (j > 0)
+                finalVal += ',';
+            finalVal += result;
+        }
+        return finalVal + '\n';
+    }
+    ;
+
+    var csvFile = '';
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += process_row(rows[i]);
+    }
+
+    var blob = new Blob([csvFile],{
+        type: 'text/csv;charset=utf-8;'
     });
+    if (navigator.msSaveBlob) {
+        // IE 10+
+        navigator.msSaveBlob(blob, filename);
+        console.log(`${filename} saved.`)
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) {
+            // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log(`${filename} saved.`)
+        }
+    }
+    return filename;
+}
+
+var elements = Object.fromEntries($$('script, img, link[rel=stylesheet], iframe').map(e=>{
+    let name = e.src || e.href;
+    return [name, e.outerHTML];
+}
+));
+
+let data = durations.map(e=>{
+    let element = e.name in elements ? elements[e.name] : "none";
+    e['element'] = element;
+    return e;
+}
+);
+
+let urlName = window.location.href;
+let urlFileName = urlName.replace(/[^\w]+/g, '_').trim() + '_blocking_elements.csv';
+
+let filename = export_to_csv(urlFileName, format_for_csv(data));
+
